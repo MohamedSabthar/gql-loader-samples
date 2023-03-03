@@ -2,10 +2,6 @@ import mohamedsabthar/dataloader as ldr;
 import ballerina/sql;
 import ballerina/io;
 
-final ldr:DataLoader booksLoader = new (batchBooks);
-final ldr:DataLoader authorLoader = new (batchAuthors);
-final ldr:DataLoader publisherLoader = new (batchPublisher);
-
 function batchAuthors(ldr:Key[] keys) returns future<(readonly & any|error)[]> {
     worker authorsWorker returns readonly & AuthorRow[] {
         if keys.length() == 0 {

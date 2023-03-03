@@ -1,14 +1,26 @@
 import ballerina/graphql;
 import ballerina/http;
+import mohamedsabthar/dataloader as ldr;
+
+listener http:Listener httpLs = new (9090,
+    interceptors = [new RequestInterceptor(), new ResponseInterceptor()]
+);
 
 @graphql:ServiceConfig {
-    contextInit,
+    contextInit: isolated function (http:RequestContext requestContext, http:Request request) returns graphql:Context {
+        graphql:Context ctx = new;
+        ctx.set("bookLoader", requestContext.get("bookLoader"));
+        ctx.set("authorLoader", requestContext.get("authorLoader"));
+        ctx.set("publisherLoader", requestContext.get("publisherLoader"));
+        return ctx;
+    },
     cors: {
         allowOrigins: ["*"]
     }
 }
-service on new graphql:Listener(9090) {
-    resource function get authors(int[] ids) returns Author[]|error {
+service on new graphql:Listener(httpLs) {
+    resource function get authors(graphql:Context ctx, int[] ids) returns Author[]|error {
+        ldr:DataLoader authorLoader = check ctx.get("authorLoader").ensureType();
         (readonly & any|error)[] authorRows = check wait authorLoader.loadMany(ids);
         Author[] authors = [];
         from any|error row in authorRows
@@ -31,9 +43,10 @@ isolated distinct service class Author {
         return self.author.name;
     }
 
-    isolated resource function get books() returns Book[]|error {
+    isolated resource function get books(graphql:Context ctx) returns Book[]|error {
         int authorId = self.author.id;
-        (readonly & any|error) result = check wait booksLoader.load(authorId);
+        ldr:DataLoader bookLoader = check ctx.get("bookLoader").ensureType();
+        (readonly & any|error) result = check wait bookLoader.load(authorId);
         readonly & BookRow[] bookRows = check result.ensureType();
         return from BookRow bookRow in bookRows
             select new (bookRow);
@@ -55,15 +68,17 @@ isolated distinct service class Book {
         return self.book.title;
     }
 
-    isolated resource function get author() returns Author|error {
+    isolated resource function get author(graphql:Context ctx) returns Author|error {
         int authorId = self.book.author;
+        ldr:DataLoader authorLoader = check ctx.get("authorLoader").ensureType();
         (readonly & any|error) result = check wait authorLoader.load(authorId);
         readonly & AuthorRow authorRow = check result.ensureType();
         return new Author(authorRow);
     }
 
-    isolated resource function get publisher() returns Publisher|error {
+    isolated resource function get publisher(graphql:Context ctx) returns Publisher|error {
         int publisherId = self.book.publisher;
+        ldr:DataLoader publisherLoader = check ctx.get("publisherLoader").ensureType();
         (readonly & any|error) result = check wait publisherLoader.load(publisherId);
         readonly & PublisherRow publisherRow = check result.ensureType();
         return new Publisher(publisherRow);
@@ -88,15 +103,4 @@ isolated distinct service class Publisher {
     isolated resource function get email() returns string {
         return self.publisher.email;
     }
-}
-
-isolated function contextInit(http:RequestContext requestContext, http:Request request) returns graphql:Context {
-    clearCachePerRequest();
-    return new;
-}
-
-isolated function clearCachePerRequest() {
-    _ = booksLoader.clearAll();
-    _ = authorLoader.clearAll();
-    _ = publisherLoader.clearAll();
 }
