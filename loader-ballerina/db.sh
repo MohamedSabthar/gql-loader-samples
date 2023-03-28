@@ -1,1 +1,0 @@
-java -jar '/Users/mohamedsabthar/Desktop/loader-examples/loader-ballerina/target/platform-libs/com/h2database/h2/2.0.206/h2-2.0.206.jar'

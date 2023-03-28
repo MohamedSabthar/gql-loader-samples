@@ -1,9 +1,8 @@
 import ballerina/graphql;
-import ballerina/http;
 import ballerina/sql;
+import ballerina/io;
 
 @graphql:ServiceConfig {
-    contextInit,
     cors: {
         allowOrigins: ["*"]
     }
@@ -11,9 +10,11 @@ import ballerina/sql;
 service on new graphql:Listener(9090) {
     resource function get authors(int[] ids) returns Author[]|error {
         var query = sql:queryConcat(`SELECT * FROM authors WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
+        io:println(query);
         stream<AuthorRow, sql:Error?> authorStream = dbClient->query(query);
+        Author[] authors = [];
         return from AuthorRow authorRow in authorStream
-            select new Author(authorRow);
+            select new (authorRow);
     }
 }
 
@@ -30,10 +31,11 @@ isolated distinct service class Author {
 
     isolated resource function get books() returns Book[]|error {
         int authorId = self.author.id;
-        (readonly & any|error) result = check wait booksLoader.load(authorId);
-        readonly & BookRow[] bookRows = check result.ensureType();
-        return from BookRow bookRow in bookRows
-            select new (bookRow);
+        var query = sql:queryConcat(`SELECT * FROM books WHERE author = ${authorId}`);
+        io:println(query);
+        stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
+        return from BookRow bookRow in bookStream
+            select new Book(bookRow);
     }
 }
 
@@ -51,14 +53,4 @@ isolated distinct service class Book {
     isolated resource function get title() returns string {
         return self.book.title;
     }
-}
-
-isolated function contextInit(http:RequestContext requestContext, http:Request request) returns graphql:Context {
-    clearCachePerRequest();
-    return new;
-}
-
-isolated function clearCachePerRequest() {
-    _ = booksLoader.clearAll();
-    _ = authorLoader.clearAll();
 }

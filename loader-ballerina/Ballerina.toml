@@ -2,15 +2,9 @@
 org = "mohamedsabthar"
 name = "loader"
 version = "0.1.0"
-distribution = "2201.4.0-20230213-151200-6d175fd1"
 
 [build-options]
 observabilityIncluded = true
-
-[[platform.java11.dependency]]
-artifactId = "h2"
-version = "2.0.206"
-groupId = "com.h2database"
 
 [[dependency]]
 org = "mohamedsabthar"
