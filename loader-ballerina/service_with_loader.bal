@@ -2,23 +2,19 @@ import ballerina/graphql;
 import ballerina/http;
 import mohamedsabthar/dataloader as ldr;
 
-listener http:Listener httpLs = new (9090,
-    interceptors = [new RequestInterceptor(), new ResponseInterceptor()]
-);
-
 @graphql:ServiceConfig {
-    contextInit: isolated function (http:RequestContext requestContext, http:Request request) returns graphql:Context {
+    contextInit: isolated function(http:RequestContext requestContext, http:Request request) returns graphql:Context {
         graphql:Context ctx = new;
-        ctx.set("bookLoader", requestContext.get("bookLoader"));
-        ctx.set("authorLoader", requestContext.get("authorLoader"));
-        ctx.set("publisherLoader", requestContext.get("publisherLoader"));
+        ctx.set("bookLoader", new ldr:DataLoader(batchBooks, dispatchInterval = 0.02));
+        ctx.set("authorLoader", new ldr:DataLoader(batchAuthors, dispatchInterval = 0.05));
+        ctx.set("publisherLoader", new ldr:DataLoader(batchPublisher, dispatchInterval = 1));
         return ctx;
     },
     cors: {
         allowOrigins: ["*"]
     }
 }
-service on new graphql:Listener(httpLs) {
+service on new graphql:Listener(9090) {
     resource function get authors(graphql:Context ctx, int[] ids) returns Author[]|error {
         ldr:DataLoader authorLoader = check ctx.get("authorLoader").ensureType();
         (readonly & any|error)[] authorRows = check wait authorLoader.loadMany(ids);
