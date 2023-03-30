@@ -115,9 +115,6 @@ dependencies = [
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "url"}
 ]
-modules = [
-	{org = "ballerina", packageName = "http", moduleName = "http"}
-]
 
 [[package]]
 org = "ballerina"
@@ -302,13 +299,10 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "task"
-version = "2.3.0"
+version = "2.3.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
-]
-modules = [
-	{org = "ballerina", packageName = "task", moduleName = "task"}
 ]
 
 [[package]]
@@ -386,8 +380,11 @@ modules = [
 [[package]]
 org = "mohamedsabthar"
 name = "dataloader"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "task"},
+	{org = "ballerina", name = "time"},
 	{org = "ballerinai", name = "observe"},
 	{org = "xlibb", name = "pipe"}
 ]
@@ -401,10 +398,8 @@ name = "loader"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "graphql"},
-	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "sql"},
-	{org = "ballerina", name = "task"},
 	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "java.jdbc"},
 	{org = "ballerinax", name = "mysql.driver"},

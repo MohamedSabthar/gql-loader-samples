@@ -1,10 +1,9 @@
 import query from "./query.js";
 import * as ramda from "ramda";
 
-export async function batchAuthors(ids) {
-  const sql = `SELECT * FROM authors WHERE id IN (?)`;
-  const params = [ids];
-  return await query(sql, params);
+export async function getAuthors() {
+  const sql = `SELECT * FROM authors`;
+  return await query(sql);
 }
 
 export async function batchBooks(authorIds) {

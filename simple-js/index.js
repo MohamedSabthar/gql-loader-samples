@@ -4,7 +4,7 @@ import { getAuthors, getBooks } from "./utils.js";
 
 const typeDefs = `#graphql
   type Query {
-    authors(ids: [Int!]!): [Author!]!
+    authors: [Author!]!
   }
   
   type Book {
@@ -20,7 +20,7 @@ const typeDefs = `#graphql
 
 const resolvers = {
   Query: {
-    authors: (_, { ids }) => getAuthors(ids),
+    authors: () => getAuthors(),
   },
   Author: {
     books: (author) => getBooks(author.id),

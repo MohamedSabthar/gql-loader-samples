@@ -9,5 +9,5 @@ observabilityIncluded = true
 [[dependency]]
 org = "mohamedsabthar"
 name = "dataloader"
-version = "0.1.0"
+version = "0.1.2"
 repository="local"

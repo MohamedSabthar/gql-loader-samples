@@ -11,7 +11,7 @@ function logQuery(sql, params) {
   console.log(mysql.format(sql, params));
 }
 
-export default async function query(sql, params) {
+export default async function query(sql, params = null) {
   logQuery(sql, params);
   try {
     const [rows, _]  = await client.promise().query(sql, params);

@@ -8,11 +8,10 @@ import ballerina/io;
     }
 }
 service on new graphql:Listener(9090) {
-    resource function get authors(int[] ids) returns Author[]|error {
-        var query = sql:queryConcat(`SELECT * FROM authors WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
-        io:println(query); https://github.com/ballerina-platform/ballerina-standard-library/issues/4273
+    resource function get authors() returns Author[]|error {
+        var query = sql:queryConcat(`SELECT * FROM authors`);
+        io:println("SELECT * FROM authors");
         stream<AuthorRow, sql:Error?> authorStream = dbClient->query(query);
-        Author[] authors = [];
         return from AuthorRow authorRow in authorStream
             select new (authorRow);
     }
@@ -32,7 +31,7 @@ isolated distinct service class Author {
     isolated resource function get books() returns Book[]|error {
         int authorId = self.author.id;
         var query = sql:queryConcat(`SELECT * FROM books WHERE author = ${authorId}`);
-        io:println(query); https://github.com/ballerina-platform/ballerina-standard-library/issues/4273
+        io:println(string `SELECT * FROM books WHERE author = ${authorId}`);
         stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
         return from BookRow bookRow in bookStream
             select new Book(bookRow);
