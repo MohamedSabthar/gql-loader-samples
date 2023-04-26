@@ -1,7 +1,6 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
-import { batchAuthors, batchBooks } from "./utils.js";
-import DataLoader from "dataloader";
+import { getAuthors, getBooks } from "./utils.js";
 
 const typeDefs = `#graphql
   type Query {
@@ -21,10 +20,10 @@ const typeDefs = `#graphql
 
 const resolvers = {
   Query: {
-    authors: (_, { ids }, { authorLoader }) => authorLoader.loadMany(ids),
+    authors: (_, { ids }) => getAuthors(ids),
   },
   Author: {
-    books: ({ id }, _, { bookLoader }) => bookLoader.load(id),
+    books: (author) => getBooks(author.id),
   },
 };
 
@@ -35,13 +34,6 @@ const server = new ApolloServer({
 
 const { url } = await startStandaloneServer(server, {
   listen: { port: 9090 },
-
-  context: () => {
-    return {
-      authorLoader: new DataLoader((keys) => batchAuthors(keys)),
-      bookLoader: new DataLoader((keys) => batchBooks(keys)),
-    };
-  },
 });
 
 console.log(`🚀  Server ready at: ${url}`);
