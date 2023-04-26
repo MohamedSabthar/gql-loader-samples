@@ -3,6 +3,6 @@
 **loader-js**: exmaple of a graphql service with dataloader written in javascript
 
 
-**sample-ballerina**: exmaple of a ballerian graphql service
+**simple-ballerina**: exmaple of a ballerian graphql service
 
-**sample-js**: exmaple of a graphql service written in javascript
+**simple-js**: exmaple of a graphql service written in javascript
