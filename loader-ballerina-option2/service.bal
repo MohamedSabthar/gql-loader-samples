@@ -2,6 +2,8 @@ import ballerina/graphql;
 import ballerina/sql;
 import ballerina/io;
 
+type BookArray Book[];
+
 @graphql:ServiceConfig {
     cors: {
         allowOrigins: ["*"]
@@ -10,7 +12,6 @@ import ballerina/io;
 service on new graphql:Listener(9090) {
     resource function get authors(int[] ids) returns Author[]|error {
         var query = sql:queryConcat(`SELECT * FROM authors WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
-        io:println(query); // https://github.com/ballerina-platform/ballerina-standard-library/issues/4273
         stream<AuthorRow, sql:Error?> authorStream = dbClient->query(query);
         return from AuthorRow authorRow in authorStream
             select new (authorRow);
@@ -28,13 +29,13 @@ isolated distinct service class Author {
         return self.author.name;
     }
 
-    isolated resource function get books() returns Book[]|error {
-        int authorId = self.author.id;
-        var query = sql:queryConcat(`SELECT * FROM books WHERE author = ${authorId}`);
-        io:println(query); // https://github.com/ballerina-platform/ballerina-standard-library/issues/4273
-        stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
-        return from BookRow bookRow in bookStream
-            select new Book(bookRow);
+    isolated resource function get books() returns @ReturnType{returnType: BookArray} DataLoader {
+        lock {
+            bookLoader.load(self.author.id, function(BookRow[] bookraws) returns BookArray {
+                return from BookRow bookRow in bookraws select new Book(bookRow);
+            });
+            return bookLoader;
+        }
     }
 }
 
@@ -53,3 +54,20 @@ isolated distinct service class Book {
         return self.book.title;
     }
 }
+
+function bookLoaderFunction = function (int[] ids) returns BookRow[][]|error {
+    var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
+    stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
+    map<BookRow[]> authorsBooks = {};
+    checkpanic from BookRow bookRow in bookStream
+            do {
+                string key = bookRow.author.toString();
+                if !authorsBooks.hasKey(key) {
+                    authorsBooks[key] = [];
+                }
+                authorsBooks.get(key).push(bookRow);
+            };
+    return ids.'map(key => authorsBooks.hasKey(key.toString()) ? authorsBooks.get(key.toString()) : []);
+};
+isolated DefaultDataLoader bookLoader = new (bookLoaderFunction);
+
