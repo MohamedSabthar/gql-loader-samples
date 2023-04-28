@@ -8,8 +8,8 @@ isolated class DefaultDataLoader {
     *DataLoader;
 
     private final anydata[] ids = [];
-    private final function (anydata[] ids) returns anydata[][]|error loaderFunction;
-    isolated function init(function (anydata[] ids) returns anydata[][]|error loadFunction) {
+    private final (isolated function (anydata[] ids) returns anydata[][]|error) loaderFunction;
+    isolated function init(isolated function (anydata[] ids) returns anydata[][]|error loadFunction) {
         self.loaderFunction = loadFunction;
     }
 
@@ -22,7 +22,9 @@ isolated class DefaultDataLoader {
     isolated function get(anydata id, typedesc<any> t = <>) returns t|error = external;
 
     isolated function dispatch() {
-        // call the loaderFunction function
-        // and do the required logic
+        lock {
+            anydata[][]|error loaderFunctionResult = self.loaderFunction(self.ids.clone());
+            // implement rest of the logic
+        }
     }
 }
