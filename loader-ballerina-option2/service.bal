@@ -54,7 +54,7 @@ isolated distinct service class Book {
     }
 }
 
-isolated function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = isolated function (anydata[] ids) returns BookRow[][]|error {
+var bookLoaderFunction = isolated function (anydata[] ids) returns BookRow[][]|error {
     var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(<int[]>ids), `)`);
     stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
     map<BookRow[]> authorsBooks = {};
