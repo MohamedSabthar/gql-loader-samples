@@ -30,7 +30,7 @@ isolated distinct service class Author {
 
     isolated resource function get books() returns @ReturnType{returnType: BookArray} DataLoader {
         lock {
-            bookLoader.load(self.author.id, function(anydata[] bookraws) returns BookArray {
+            bookLoader.load(self.author.id, isolated function(anydata[] bookraws) returns BookArray {
                 return from BookRow bookRow in <BookRow[]>bookraws select new Book(bookRow);
             });
             return bookLoader;
@@ -54,7 +54,7 @@ isolated distinct service class Book {
     }
 }
 
-function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = function (anydata[] ids) returns BookRow[][]|error {
+isolated function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = isolated function (anydata[] ids) returns BookRow[][]|error {
     var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(<int[]>ids), `)`);
     stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
     map<BookRow[]> authorsBooks = {};
@@ -68,5 +68,5 @@ function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = function
             };
     return ids.'map(key => authorsBooks.hasKey(key.toString()) ? authorsBooks.get(key.toString()) : []);
 };
-isolated DefaultDataLoader bookLoader = new (bookLoaderFunction);
+DefaultDataLoader bookLoader = new (bookLoaderFunction);
 
