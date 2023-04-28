@@ -1,6 +1,5 @@
 import ballerina/graphql;
 import ballerina/sql;
-import ballerina/io;
 
 type BookArray Book[];
 
@@ -31,8 +30,8 @@ isolated distinct service class Author {
 
     isolated resource function get books() returns @ReturnType{returnType: BookArray} DataLoader {
         lock {
-            bookLoader.load(self.author.id, function(BookRow[] bookraws) returns BookArray {
-                return from BookRow bookRow in bookraws select new Book(bookRow);
+            bookLoader.load(self.author.id, function(anydata[] bookraws) returns BookArray {
+                return from BookRow bookRow in <BookRow[]>bookraws select new Book(bookRow);
             });
             return bookLoader;
         }
@@ -55,8 +54,8 @@ isolated distinct service class Book {
     }
 }
 
-function bookLoaderFunction = function (int[] ids) returns BookRow[][]|error {
-    var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
+function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = function (anydata[] ids) returns BookRow[][]|error {
+    var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(<int[]>ids), `)`);
     stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
     map<BookRow[]> authorsBooks = {};
     checkpanic from BookRow bookRow in bookStream

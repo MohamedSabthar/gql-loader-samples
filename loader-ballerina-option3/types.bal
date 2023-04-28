@@ -17,6 +17,6 @@ public type PublisherRow record {
 };
 
 public type LoaderRecord record {
-    function batchFuntion;
+    function (anydata[] ids) returns anydata[][]|error batchFuntion;
 };
 public annotation LoaderRecord Loader on function;

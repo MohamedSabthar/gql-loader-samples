@@ -1,6 +1,5 @@
 import ballerina/graphql;
 import ballerina/sql;
-import ballerina/io;
 
 @graphql:ServiceConfig {
     cors: {
@@ -56,8 +55,8 @@ isolated distinct service class Book {
     }
 }
 
-function bookLoaderFunction = function (int[] ids) returns BookRow[][]|error {
-    var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(ids), `)`);
+function (anydata[] ids) returns anydata[][]|error bookLoaderFunction = function (anydata[] ids) returns BookRow[][]|error {
+    var query = sql:queryConcat(`SELECT * FROM books WHERE id IN (`, sql:arrayFlattenQuery(<int[]>ids), `)`);
     stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
     map<BookRow[]> authorsBooks = {};
     checkpanic from BookRow bookRow in bookStream
@@ -71,27 +70,3 @@ function bookLoaderFunction = function (int[] ids) returns BookRow[][]|error {
     return ids.'map(key => authorsBooks.hasKey(key.toString()) ? authorsBooks.get(key.toString()) : []);
 };
 
-type DataLoader object {
-    isolated function load(anydata id);
-    isolated function get(anydata id, typedesc<any> t = <>) returns t|error;
-};
-
-isolated class DefaultDataLoader {
-    *DataLoader;
-
-    private anydata[] ids = [];
-    private function? f = ();
-    private function loaderFunction;
-
-    isolated function init(function loadFunction) {
-        self.loaderFunction = loadFunction;
-    }
-
-    isolated function load(anydata id) {
-        lock {
-            self.ids.push(id.clone());
-        }
-    }
-
-    isolated function get(anydata id, typedesc<any> t = <>) returns t|error = external;
-}
