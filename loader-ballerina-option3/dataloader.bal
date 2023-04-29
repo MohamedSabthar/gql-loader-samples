@@ -10,6 +10,7 @@ isolated class DefaultDataLoader {
     private final anydata[] ids = [];
     private anydata[][] loaderResult = [];
     private final (isolated function (anydata[] ids) returns anydata[][]|error) loaderFunction;
+    
     isolated function init(isolated function (anydata[] ids) returns anydata[][]|error loadFunction) {
         self.loaderFunction = loadFunction;
     }
