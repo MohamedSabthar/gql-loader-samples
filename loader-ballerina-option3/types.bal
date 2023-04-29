@@ -17,6 +17,7 @@ public type PublisherRow record {
 };
 
 public type LoaderRecord record {
+    string id?; // if not provided, Listener will generate one
     function (anydata[] ids) returns anydata[][]|error batchFuntion;
 };
 public annotation LoaderRecord Loader on function;
