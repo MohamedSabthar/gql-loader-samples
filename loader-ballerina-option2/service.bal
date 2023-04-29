@@ -59,14 +59,20 @@ var bookLoaderFunction = isolated function (anydata[] ids) returns BookRow[][]|e
     stream<BookRow, sql:Error?> bookStream = dbClient->query(query);
     map<BookRow[]> authorsBooks = {};
     checkpanic from BookRow bookRow in bookStream
-            do {
-                string key = bookRow.author.toString();
-                if !authorsBooks.hasKey(key) {
-                    authorsBooks[key] = [];
-                }
-                authorsBooks.get(key).push(bookRow);
-            };
-    return ids.'map(key => authorsBooks.hasKey(key.toString()) ? authorsBooks.get(key.toString()) : []);
+        do {
+            string key = bookRow.author.toString();
+            if !authorsBooks.hasKey(key) {
+                authorsBooks[key] = [];
+            }
+            authorsBooks.get(key).push(bookRow);
+        };
+
+    map<BookRow[]> & readonly _authorsBooks = authorsBooks.cloneReadOnly();
+    return ids.'map(isolated function (anydata key) returns BookRow[] {
+        lock {
+            return _authorsBooks.hasKey(key.toString()) ? _authorsBooks.get(key.toString()) : [];
+        }
+    });
 };
 DefaultDataLoader bookLoader = new (bookLoaderFunction);
 

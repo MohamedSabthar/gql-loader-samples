@@ -9,7 +9,7 @@ isolated class DefaultDataLoader {
 
     private final anydata[] ids = [];
     private final (isolated function (anydata[] ids) returns anydata[][]|error) loaderFunction;
-    private (function (anydata[] data) returns any)? callbackFunction = ();
+    private (isolated function (anydata[] data) returns any)? callbackFunction = ();
 
     isolated function init(isolated function (anydata[] ids) returns anydata[][]|error loaderFunction) {
         self.loaderFunction = loaderFunction;
@@ -31,8 +31,10 @@ isolated class DefaultDataLoader {
 
     isolated function execute() {
         lock {
-            if self.callbackFunction is (function (anydata[] data) returns any) {
-                self.callbackFunction([1, 1]);
+            var foo = self.callbackFunction;
+            if foo is (function (anydata[] data) returns any) {
+                anydata[] data = [];
+                any fooResult = foo(data);
             }
         }
     }
